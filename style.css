@@ -1,0 +1,107 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.drag-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.drag-container > div {
+    display: flex;
+    flex-direction: row; 
+    align-items: center;
+    margin-bottom: 20px;
+    max-width: 100%; 
+    overflow-x: auto; 
+}
+
+.drag-container table {
+    width: max-content; 
+    border-collapse: collapse;
+}
+
+.drag-container th, .drag-container td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+.calendars {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.disciplinas, .professores {
+    width: 100%;
+}
+
+.disciplinas tbody, .professores tbody {
+    display: flex;
+    flex-direction: row;
+}
+
+.disciplinas tbody tr, .professores tbody tr {
+    display: flex;
+    flex-direction: column; 
+}
+
+.calendar {
+    width: 100%;
+    max-width: 600px;
+    overflow-x: auto;
+    margin-right: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background-color: #007BFF;
+    color: white;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+td {
+    cursor: grab;
+}
+
+td:active {
+    cursor: grabbing;
+}
+
+td.editable, th.editable {
+    cursor: text;
+}
+
+@media (min-width: 768px) {
+    .container {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .calendar {
+        max-width: 400px;
+    }
+}

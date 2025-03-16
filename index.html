@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horários do Ensino Médio</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+</head>
+<body>
+    <h1>Horários das Aulas do Ensino Médio</h1>
+    <div class="container">
+        <div class="drag-container">
+            <div class="disciplinas" id="disciplinas">
+                <table>
+                    <tbody>
+                        <tr><td>Matemática</td></tr>
+                        <tr><td>Português</td></tr>
+                        <tr><td>História</td></tr>
+                        <tr><td>Geografia</td></tr>
+                        <tr><td>Ciências</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <input type="text" id="novaDisciplina" placeholder="Nova Disciplina">
+            <button id="adicionarDisciplina">Adicionar Disciplina</button>
+            <div class="professores" id="professores">
+                <table>
+                    <tbody>
+                        <tr><td>Prof1</td></tr>
+                        <tr><td>Prof2</td></tr>
+                        <tr><td>Prof3</td></tr>
+                        <tr><td>Prof4</td></tr>
+                        <tr><td>Prof5</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <input type="text" id="novoProfessor" placeholder="Novo Professor">
+            <button id="adicionarProfessor">Adicionar Professor</button>
+        </div>
+        <div class="calendars">
+            <div class="calendar" id="ano1">
+                <h2>1ª Série</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="editable">Horário</th>
+                            <th>Seg</th>
+                            <th>Ter</th>
+                            <th>Qua</th>
+                            <th>Qui</th>
+                            <th>Sex</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="calendar" id="ano2">
+                <h2>2ª Série</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="editable">Horário</th>
+                            <th>Seg</th>
+                            <th>Ter</th>
+                            <th>Qua</th>
+                            <th>Qui</th>
+                            <th>Sex</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="calendar" id="ano3">
+                <h2>3ª Série</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="editable">Horário</th>
+                            <th>Seg</th>
+                            <th>Ter</th>
+                            <th>Qua</th>
+                            <th>Qui</th>
+                            <th>Sex</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div>
+            <input type="text" id="novoHorario" placeholder="Novo Horário">
+            <button id="adicionarHorario">Adicionar Horário</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

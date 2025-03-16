@@ -40,9 +40,9 @@ body {
 
 .calendars {
     display: flex;
-    flex-direction: column;
     align-items: center;
     width: 100%;
+    justify-content: center;
 }
 
 .disciplinas, .professores {
@@ -64,6 +64,14 @@ body {
     max-width: 600px;
     overflow-x: auto;
     margin-right: 20px;
+}
+
+.calendar h2 {
+    text-align: center;
+}
+
+.calendar table td {
+    font-size: 15px;
 }
 
 table {

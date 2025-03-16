@@ -84,4 +84,24 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById('novoProfessor').value = '';
         }
     });
+
+    document.getElementById('adicionarHorario').addEventListener('click', function() {
+        const novoHorario = document.getElementById('novoHorario').value;
+        const calendarioSelecionado = document.getElementById('selecionarCalendario').value;
+
+        if (novoHorario) {
+            const tabela = document.querySelector(`#${calendarioSelecionado} tbody`);
+            const novaLinha = document.createElement('tr');
+            novaLinha.innerHTML = `
+                <td class="editable">${novoHorario}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            `;
+            tabela.appendChild(novaLinha);
+            document.getElementById('novoHorario').value = '';
+        }
+    });
 });

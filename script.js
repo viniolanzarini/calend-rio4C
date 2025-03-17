@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener("drop", event => {
         event.preventDefault();
         const dragging = document.querySelector(".dragging");
-        if (dragging && event.target.tagName === "TD" && event.target.classList.contains("draggable")) {
+        if (dragging && event.target.tagName === "TD" && event.target.classList.contains("draggable") && event.target.cellIndex !== 0) {
             const confirmacao = confirm("Você deseja realmente substituir o conteúdo da célula?");
             if (confirmacao) {
                 event.target.innerHTML = dragging.innerHTML;
@@ -94,14 +94,37 @@ document.addEventListener("DOMContentLoaded", function () {
             const novaLinha = document.createElement('tr');
             novaLinha.innerHTML = `
                 <td class="editable">${novoHorario}</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
+                <td class="draggable editable" draggable="true" contenteditable="true"></td>
+                <td class="draggable editable" draggable="true" contenteditable="true"></td>
+                <td class="draggable editable" draggable="true" contenteditable="true"></td>
+                <td class="draggable editable" draggable="true" contenteditable="true"></td>
+                <td class="draggable editable" draggable="true" contenteditable="true"></td>
             `;
             tabela.appendChild(novaLinha);
             document.getElementById('novoHorario').value = '';
         }
+    });
+
+    // Tornar os elementos da div disciplinas "draggable"
+    new Sortable(document.getElementById('disciplinas').querySelector('tbody'), {
+        group: 'shared',
+        animation: 150,
+        ghostClass: 'sortable-ghost'
+    });
+
+    // Tornar os elementos da div professores "draggable"
+    new Sortable(document.getElementById('professores').querySelector('tbody'), {
+        group: 'shared',
+        animation: 150,
+        ghostClass: 'sortable-ghost'
+    });
+
+    // Tornar os elementos dos calendários "droppable"
+    document.querySelectorAll('.calendar tbody').forEach(function(calendar) {
+        new Sortable(calendar, {
+            group: 'shared',
+            animation: 150,
+            ghostClass: 'sortable-ghost'
+        });
     });
 });

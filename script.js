@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let horarios = ["07:00", "08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00"];
     const aulas = {
-        "ano1": [...Array(10)].map(() => [...Array(5)].map(() => "Teste")),
+        "ano1": [...Array(10)].map(() => [...Array(5)].map(() => "")),
         "ano2": [...Array(10)].map(() => [...Array(5)].map(() => "Teste")),
         "ano3": [...Array(10)].map(() => [...Array(5)].map(() => "Teste"))
     };

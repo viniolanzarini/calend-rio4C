@@ -25,6 +25,28 @@ document.addEventListener("DOMContentLoaded", function () {
 
     ["ano1", "ano2", "ano3"].forEach(preencherTabela);
 
+    // Função para verificar se um item já existe na célula
+    function itemExisteNaCelula(celula, item, tipo) {
+        const conteudo = celula.textContent;
+        if (conteudo.trim() === '') return false;
+        
+        if (tipo === 'professor') {
+            // Dividir o conteúdo por vírgulas e verificar se o professor já existe
+            const professores = conteudo.split(',').map(p => p.trim());
+            return professores.includes(item);
+        } else if (tipo === 'discipline') {
+            // Dividir o conteúdo por hífens e verificar se a disciplina já existe
+            const disciplinas = conteudo.split('-').map(d => d.trim());
+            return disciplinas.includes(item);
+        } else if (tipo === 'cell') {
+            // Dividir o conteúdo por | e verificar se o conteúdo já existe
+            const conteudos = conteudo.split('|').map(c => c.trim());
+            return conteudos.includes(item.trim());
+        }
+        
+        return false;
+    }
+
     // Função para configurar eventos de drag-and-drop para qualquer célula
     function configurarCelulasDraggableDroppable(cells) {
         cells.forEach(cell => {
@@ -68,15 +90,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (sourceType === 'discipline') {
                     if (this.textContent.trim() === '') {
                         this.textContent = data;
-                    } else {
+                    } else if (!itemExisteNaCelula(this, data, 'discipline')) {
                         this.textContent = this.textContent + ' - ' + data;
+                    } else {
+                        alert('Esta disciplina já está nesta célula!');
                     }
                 } 
                 else if (sourceType === 'professor') {
                     if (this.textContent.trim() === '') {
                         this.textContent = data;
-                    } else {
+                    } else if (!itemExisteNaCelula(this, data, 'professor')) {
                         this.textContent = this.textContent + ', ' + data;
+                    } else {
+                        alert('Este professor já está nesta célula!');
                     }
                 }
                 // Se for arrasto de uma célula para outra
@@ -84,8 +110,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (confirm('Deseja mover ou copiar este conteúdo?')) {
                         if (this.textContent.trim() === '') {
                             this.textContent = data;
-                        } else {
+                        } else if (!itemExisteNaCelula(this, data, 'cell')) {
                             this.textContent = this.textContent + ' | ' + data;
+                        } else {
+                            alert('Este conteúdo já existe nesta célula!');
+                            return;
                         }
                         
                         // Limpar a célula de origem se estiver movendo
@@ -196,27 +225,70 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    // Função para validar formato de horário
+    function validarFormatoHorario(horario) {
+        // Padrão para horários simples (ex: 07:00)
+        const padrao1 = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        
+        // Padrão para intervalos de horário (ex: 08:00 - 09:00)
+        const padrao2 = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]\s*-\s*([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        
+        return padrao1.test(horario) || padrao2.test(horario);
+    }
+
+    // Configurar o campo de input de horário
+    const inputNovoHorario = document.getElementById('novoHorario');
+    
+    // Adicionar placeholder mais descritivo
+    inputNovoHorario.placeholder = "HH:MM ou HH:MM - HH:MM";
+    
+    // Configurar o botão de adicionar horário com validação
     document.getElementById('adicionarHorario').addEventListener('click', function() {
-        const novoHorario = document.getElementById('novoHorario').value;
+        const novoHorario = inputNovoHorario.value;
         const calendarioSelecionado = document.getElementById('selecionarCalendario').value;
 
-        if (novoHorario) {
-            const tabela = document.querySelector(`#${calendarioSelecionado} tbody`);
-            const novaLinha = document.createElement('tr');
-            novaLinha.innerHTML = `
-                <td class="editable" contenteditable="true">${novoHorario}</td>
-                <td class="droppable editable" contenteditable="true" draggable="true"></td>
-                <td class="droppable editable" contenteditable="true" draggable="true"></td>
-                <td class="droppable editable" contenteditable="true" draggable="true"></td>
-                <td class="droppable editable" contenteditable="true" draggable="true"></td>
-                <td class="droppable editable" contenteditable="true" draggable="true"></td>
-            `;
-            
-            // Configurar as novas células para serem arrastáveis e receberem elementos
-            configurarCelulasDraggableDroppable(novaLinha.querySelectorAll('.droppable'));
-            
-            tabela.appendChild(novaLinha);
-            document.getElementById('novoHorario').value = '';
+        if (!novoHorario) {
+            alert('Por favor, informe um horário.');
+            return;
+        }
+        
+        if (!validarFormatoHorario(novoHorario)) {
+            alert('Formato de horário inválido. Use HH:MM ou HH:MM - HH:MM');
+            return;
+        }
+
+        const tabela = document.querySelector(`#${calendarioSelecionado} tbody`);
+        const novaLinha = document.createElement('tr');
+        novaLinha.innerHTML = `
+            <td class="editable" contenteditable="true">${novoHorario}</td>
+            <td class="droppable editable" contenteditable="true" draggable="true"></td>
+            <td class="droppable editable" contenteditable="true" draggable="true"></td>
+            <td class="droppable editable" contenteditable="true" draggable="true"></td>
+            <td class="droppable editable" contenteditable="true" draggable="true"></td>
+            <td class="droppable editable" contenteditable="true" draggable="true"></td>
+        `;
+        
+        // Configurar as novas células para serem arrastáveis e receberem elementos
+        configurarCelulasDraggableDroppable(novaLinha.querySelectorAll('.droppable'));
+        
+        tabela.appendChild(novaLinha);
+        inputNovoHorario.value = '';
+    });
+    
+    // Adicionar validação enquanto o usuário digita no campo de horário
+    inputNovoHorario.addEventListener('input', function() {
+        const valor = this.value;
+        
+        // Aplicar formatação automática de dois pontos após os dois primeiros dígitos
+        if (valor.length === 2 && !isNaN(valor) && !valor.includes(':')) {
+            this.value = valor + ':';
+        }
+        
+        // Validar o formato atual do campo
+        if (valor && !validarFormatoHorario(valor)) {
+            this.classList.add('input-invalido');
+        } else {
+            this.classList.remove('input-invalido');
         }
     });
     

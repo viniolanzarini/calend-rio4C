@@ -95,16 +95,68 @@ th, td {
     text-align: center;
 }
 
-td {
+/* Estilo para elementos arrastáveis */
+.draggable-discipline {
     cursor: grab;
+    background-color: #e7f4ff;
+    transition: background-color 0.3s ease;
+    border-left: 3px solid #2196F3;
 }
 
-td:active {
+.draggable-professor {
+    cursor: grab;
+    background-color: #f0fff0;
+    transition: background-color 0.3s ease;
+    border-left: 3px solid #4CAF50;
+}
+
+.draggable-discipline:hover {
+    background-color: #d0e8ff;
+}
+
+.draggable-professor:hover {
+    background-color: #e0f7e0;
+}
+
+.draggable-discipline.dragging, .draggable-professor.dragging, .droppable.dragging {
+    opacity: 0.5;
     cursor: grabbing;
+}
+
+/* Estilo para destinos de soltar */
+.droppable {
+    cursor: grab;
+    transition: all 0.2s ease;
+    white-space: pre-line;
+    min-height: 20px;
+}
+
+.droppable:not(:empty) {
+    background-color: #f8f9fa;
+    background-image: linear-gradient(to bottom, rgba(240, 248, 255, 0.5), rgba(240, 255, 240, 0.5));
+}
+
+.droppable:hover {
+    background-color: #e9ecef;
+}
+
+.drop-hover {
+    background-color: #e3f2fd !important;
+    border: 2px dashed #2196F3;
 }
 
 td.editable, th.editable {
     cursor: text;
+}
+
+td.editable:focus, th.editable:focus {
+    outline: 2px solid #007BFF;
+    background-color: #f9f9f9;
+}
+
+/* Estilo para o menu de contexto */
+.context-menu div:hover {
+    background-color: #f0f0f0;
 }
 
 @media (min-width: 768px) {

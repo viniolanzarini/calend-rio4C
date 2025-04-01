@@ -47,6 +47,46 @@ document.addEventListener("DOMContentLoaded", function () {
         return false;
     }
 
+    // Função para verificar se um professor já está alocado no mesmo horário em outra turma
+    function verificarConflitoProfessor(professor, horarioIndex, diaSemanaIndex, turmaId) {
+        // Obter índice da célula na tabela (mesma linha e coluna, mas turmas diferentes)
+        const turmas = ["ano1", "ano2", "ano3"];
+        
+        // Para cada turma diferente da atual
+        for (const turma of turmas) {
+            if (turma === turmaId) continue; // Pular a turma atual
+            
+            // Encontrar a célula correspondente na outra turma
+            const tabelaTurma = document.querySelector(`#${turma} tbody`);
+            if (!tabelaTurma) continue;
+            
+            const linhas = tabelaTurma.querySelectorAll('tr');
+            if (horarioIndex >= linhas.length) continue;
+            
+            const linha = linhas[horarioIndex];
+            const celulas = linha.querySelectorAll('td');
+            
+            // A primeira célula é o horário, então precisamos adicionar 1 ao índice do dia da semana
+            if (diaSemanaIndex + 1 >= celulas.length) continue;
+            
+            const celula = celulas[diaSemanaIndex + 1];
+            const conteudo = celula.textContent;
+            
+            if (conteudo.trim() === '') continue;
+            
+            // Verificar se o professor está nesta célula
+            const professoresCelula = conteudo.split(',').map(p => p.trim());
+            if (professoresCelula.includes(professor)) {
+                return {
+                    conflito: true,
+                    turma: turma.replace('ano', '')
+                };
+            }
+        }
+        
+        return { conflito: false };
+    }
+
     // Função para configurar eventos de drag-and-drop para qualquer célula
     function configurarCelulasDraggableDroppable(cells) {
         cells.forEach(cell => {
@@ -97,6 +137,24 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 } 
                 else if (sourceType === 'professor') {
+                    // Encontrar índice do horário e dia da semana
+                    const linha = this.parentElement;
+                    const tabela = linha.parentElement;
+                    const turmaContainer = tabela.parentElement.parentElement;
+                    const turmaId = turmaContainer.id;
+                    
+                    const horarioIndex = Array.from(tabela.children).indexOf(linha);
+                    const diaSemanaIndex = Array.from(linha.children).indexOf(this) - 1; // -1 porque a primeira célula é o horário
+                    
+                    // Verificar se o professor já está alocado no mesmo horário em outra turma
+                    const { conflito, turma } = verificarConflitoProfessor(data, horarioIndex, diaSemanaIndex, turmaId);
+                    
+                    if (conflito) {
+                        alert(`O professor ${data} já está alocado neste mesmo horário na ${turma}ª Série!`);
+                        return;
+                    }
+                    
+                    // Continuar com a alocação normal se não houver conflito
                     if (this.textContent.trim() === '') {
                         this.textContent = data;
                     } else if (!itemExisteNaCelula(this, data, 'professor')) {
@@ -108,6 +166,42 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Se for arrasto de uma célula para outra
                 else if (sourceType === 'cell') {
                     if (confirm('Deseja mover ou copiar este conteúdo?')) {
+                        // Verificar se contém professores que possam ter conflito
+                        const professores = data.split(',').map(p => p.trim());
+                        
+                        // Encontrar índice do horário e dia da semana
+                        const linha = this.parentElement;
+                        const tabela = linha.parentElement;
+                        const turmaContainer = tabela.parentElement.parentElement;
+                        const turmaId = turmaContainer.id;
+                        
+                        const horarioIndex = Array.from(tabela.children).indexOf(linha);
+                        const diaSemanaIndex = Array.from(linha.children).indexOf(this) - 1;
+                        
+                        // Verificar conflitos para cada professor
+                        let temConflito = false;
+                        let professorComConflito = '';
+                        let turmaConflito = '';
+                        
+                        for (const professor of professores) {
+                            if (professor.trim() === '') continue;
+                            
+                            const { conflito, turma } = verificarConflitoProfessor(professor, horarioIndex, diaSemanaIndex, turmaId);
+                            
+                            if (conflito) {
+                                temConflito = true;
+                                professorComConflito = professor;
+                                turmaConflito = turma;
+                                break;
+                            }
+                        }
+                        
+                        if (temConflito) {
+                            alert(`O professor ${professorComConflito} já está alocado neste mesmo horário na ${turmaConflito}ª Série!`);
+                            return;
+                        }
+                        
+                        // Continuar com a alocação normal se não houver conflito
                         if (this.textContent.trim() === '') {
                             this.textContent = data;
                         } else if (!itemExisteNaCelula(this, data, 'cell')) {
@@ -337,6 +431,40 @@ document.addEventListener("DOMContentLoaded", function () {
                 menu.remove();
                 document.removeEventListener('click', closeMenu);
             });
+        }
+    });
+    
+    // Verificar conflitos quando o usuário edita diretamente uma célula
+    document.addEventListener('input', function(e) {
+        const target = e.target;
+        
+        if (target.classList.contains('droppable')) {
+            const conteudo = target.textContent;
+            const professores = conteudo.split(',').map(p => p.trim());
+            
+            // Encontrar índice do horário e dia da semana
+            const linha = target.parentElement;
+            const tabela = linha.parentElement;
+            const turmaContainer = tabela.parentElement.parentElement;
+            const turmaId = turmaContainer.id;
+            
+            const horarioIndex = Array.from(tabela.children).indexOf(linha);
+            const diaSemanaIndex = Array.from(linha.children).indexOf(target) - 1;
+            
+            // Verificar conflitos para cada professor
+            for (const professor of professores) {
+                if (professor.trim() === '') continue;
+                
+                const { conflito, turma } = verificarConflitoProfessor(professor, horarioIndex, diaSemanaIndex, turmaId);
+                
+                if (conflito) {
+                    alert(`O professor ${professor} já está alocado neste mesmo horário na ${turma}ª Série!`);
+                    // Remover o professor conflitante
+                    const novosConteudos = professores.filter(p => p !== professor).join(', ');
+                    target.textContent = novosConteudos;
+                    break;
+                }
+            }
         }
     });
 });

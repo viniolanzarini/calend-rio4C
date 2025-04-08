@@ -25,22 +25,50 @@ document.addEventListener("DOMContentLoaded", function () {
 
     ["ano1", "ano2", "ano3"].forEach(preencherTabela);
 
-    function itemExisteNaCelula(celula, item, tipo) {
+    // Função para verificar se uma célula contém uma disciplina
+    function verificarDisciplinaExiste(celula) {
         const conteudo = celula.textContent;
         if (conteudo.trim() === '') return false;
 
-        if (tipo === 'professor') {
-            const professores = conteudo.split(',').map(p => p.trim());
-            return professores.includes(item);
-        } else if (tipo === 'discipline') {
-            const disciplinas = conteudo.split('-').map(d => d.trim());
-            return disciplinas.includes(item);
-        } else if (tipo === 'cell') {
-            const conteudos = conteudo.split('|').map(c => c.trim());
-            return conteudos.includes(item.trim());
+        // Se tem disciplina, vai ter o formato "Disciplina" ou "Disciplina (Professor1, Professor2)"
+        // Verificamos se há um conteúdo antes do primeiro parêntese (se existir)
+        const contemParenteses = conteudo.indexOf('(') !== -1;
+        if (contemParenteses) {
+            return conteudo.substring(0, conteudo.indexOf('(')).trim() !== '';
+        } else {
+            return conteudo.trim() !== '';
         }
+    }
 
-        return false;
+    // Função para extrair disciplina e professores de uma célula
+    function extrairDisciplinaProfessores(celula) {
+        const conteudo = celula.textContent;
+        if (conteudo.trim() === '') return { disciplina: '', professores: [] };
+
+        const regex = /^(.+?)(?:\s*\((.+)\))?$/;
+        const matches = conteudo.match(regex);
+        
+        if (matches) {
+            const disciplina = matches[1].trim();
+            const professores = matches[2] ? matches[2].split(',').map(p => p.trim()) : [];
+            return { disciplina, professores };
+        }
+        
+        return { disciplina: conteudo, professores: [] };
+    }
+
+    // Função para atualizar o conteúdo da célula com disciplina e professores
+    function atualizarConteudoCelula(celula, disciplina, professores) {
+        if (!disciplina) {
+            celula.textContent = '';
+            return;
+        }
+        
+        if (professores.length > 0) {
+            celula.textContent = `${disciplina} (${professores.join(', ')})`;
+        } else {
+            celula.textContent = disciplina;
+        }
     }
 
     function verificarConflitoProfessor(professor, horarioIndex, diaSemanaIndex, turmaId) {
@@ -61,12 +89,9 @@ document.addEventListener("DOMContentLoaded", function () {
             if (diaSemanaIndex + 1 >= celulas.length) continue;
 
             const celula = celulas[diaSemanaIndex + 1];
-            const conteudo = celula.textContent;
-
-            if (conteudo.trim() === '') continue;
-
-            const professoresCelula = conteudo.split(',').map(p => p.trim());
-            if (professoresCelula.includes(professor)) {
+            const { professores } = extrairDisciplinaProfessores(celula);
+            
+            if (professores.includes(professor)) {
                 return {
                     conflito: true,
                     turma: turma.replace('ano', '')
@@ -75,24 +100,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         return { conflito: false };
-    }
-
-    function verificarConflitosNaCelula(celula, horarioIndex, diaSemanaIndex, turmaId) {
-        const conteudo = celula.textContent;
-        const professores = conteudo.split(',').map(p => p.trim());
-
-        for (const professor of professores) {
-            if (professor.trim() === '') continue;
-
-            const { conflito, turma } = verificarConflitoProfessor(professor, horarioIndex, diaSemanaIndex, turmaId);
-
-            if (conflito) {
-                alert(`O professor ${professor} já está alocado neste mesmo horário na ${turma}ª Série!`);
-                const novosConteudos = professores.filter(p => p !== professor).join(', ');
-                celula.textContent = novosConteudos;
-                break;
-            }
-        }
     }
 
     function configurarCelulasDraggableDroppable(cells) {
@@ -137,75 +144,135 @@ document.addEventListener("DOMContentLoaded", function () {
                 const horarioIndex = Array.from(tabela.children).indexOf(linha);
                 const diaSemanaIndex = Array.from(linha.children).indexOf(this) - 1;
 
-                if (sourceType === 'discipline') {
-                    if (!itemExisteNaCelula(this, data, 'discipline')) {
-                        if (this.textContent.trim() === '') {
-                            this.textContent = data;
-                        } else {
-                            this.textContent = this.textContent + ' - ' + data;
-                        }
-                    } else {
-                        alert('Esta disciplina já está nesta célula!');
-                    }
-                } else if (sourceType === 'professor') {
-                    const { conflito, turma } = verificarConflitoProfessor(data, horarioIndex, diaSemanaIndex, turmaId);
+                // Extrair disciplina e professores atuais da célula
+                const { disciplina: disciplinaAtual, professores: professoresAtuais } = extrairDisciplinaProfessores(this);
 
+                if (sourceType === 'discipline') {
+                    // Verificar se já existe alguma disciplina na célula
+                    if (disciplinaAtual && disciplinaAtual !== data) {
+                        alert('Esta célula já possui uma disciplina! Só é permitida uma disciplina por célula.');
+                        return;
+                    }
+                    
+                    // Atualizar a célula com a nova disciplina mantendo os professores
+                    atualizarConteudoCelula(this, data, professoresAtuais);
+                } 
+                else if (sourceType === 'professor') {
+                    // Verificar se existe uma disciplina definida
+                    if (!disciplinaAtual) {
+                        alert('Você precisa adicionar uma disciplina antes de associar um professor!');
+                        return;
+                    }
+                    
+                    // Verificar se o professor já está na célula
+                    if (professoresAtuais.includes(data)) {
+                        alert('Este professor já está associado a esta disciplina!');
+                        return;
+                    }
+                    
+                    // Verificar conflito de horário com outras turmas
+                    const { conflito, turma } = verificarConflitoProfessor(data, horarioIndex, diaSemanaIndex, turmaId);
                     if (conflito) {
                         alert(`O professor ${data} já está alocado neste mesmo horário na ${turma}ª Série!`);
                         return;
                     }
-
-                    if (!itemExisteNaCelula(this, data, 'professor')) {
-                        if (this.textContent.trim() === '') {
-                            this.textContent = data;
-                        } else {
-                            this.textContent = this.textContent + ', ' + data;
-                        }
-                    } else {
-                        alert('Este professor já está nesta célula!');
+                    
+                    // Adicionar o professor à célula
+                    professoresAtuais.push(data);
+                    atualizarConteudoCelula(this, disciplinaAtual, professoresAtuais);
+                } 
+                else if (sourceType === 'cell') {
+                    const { disciplina: disciplinaArrastada, professores: professoresArrastados } = extrairDisciplinaProfessores(window.dragSourceElement);
+                    
+                    // Se já tem disciplina e a arrastada é diferente, impedir
+                    if (disciplinaAtual && disciplinaArrastada && disciplinaAtual !== disciplinaArrastada) {
+                        alert('Esta célula já possui uma disciplina! Só é permitida uma disciplina por célula.');
+                        return;
                     }
-                } else if (sourceType === 'cell') {
-                    const professores = data.split(',').map(p => p.trim());
-
+                    
+                    // Nova disciplina a ser usada (prioriza a existente ou pega a arrastada)
+                    const novaDisciplina = disciplinaAtual || disciplinaArrastada;
+                    
+                    // Verifica conflitos de professores com outras turmas
                     let temConflito = false;
                     let professorComConflito = '';
                     let turmaConflito = '';
-
-                    for (const professor of professores) {
-                        if (professor.trim() === '') continue;
-
-                        const { conflito, turma } = verificarConflitoProfessor(professor, horarioIndex, diaSemanaIndex, turmaId);
-
-                        if (conflito) {
-                            temConflito = true;
-                            professorComConflito = professor;
-                            turmaConflito = turma;
-                            break;
+                    
+                    for (const professor of professoresArrastados) {
+                        if (!professoresAtuais.includes(professor)) {
+                            const { conflito, turma } = verificarConflitoProfessor(professor, horarioIndex, diaSemanaIndex, turmaId);
+                            if (conflito) {
+                                temConflito = true;
+                                professorComConflito = professor;
+                                turmaConflito = turma;
+                                break;
+                            }
                         }
                     }
-
+                    
                     if (temConflito) {
                         alert(`O professor ${professorComConflito} já está alocado neste mesmo horário na ${turmaConflito}ª Série!`);
                         return;
                     }
-
-                    if (!itemExisteNaCelula(this, data, 'cell')) {
-                        if (this.textContent.trim() === '') {
-                            this.textContent = data;
-                        } else {
-                            this.textContent = this.textContent + ' | ' + data;
-                        }
-                    } else {
-                        alert('Este conteúdo já existe nesta célula!');
-                        return;
-                    }
-
+                    
+                    // Combinar professores sem duplicatas
+                    const novosProfessores = [...new Set([...professoresAtuais, ...professoresArrastados])];
+                    
+                    // Atualizar célula
+                    atualizarConteudoCelula(this, novaDisciplina, novosProfessores);
+                    
+                    // Perguntar se quer limpar a célula original
                     if (window.dragSourceElement && confirm('Limpar a célula original?')) {
                         window.dragSourceElement.textContent = '';
                     }
                 }
-
-                verificarConflitosNaCelula(this, horarioIndex, diaSemanaIndex, turmaId);
+            });
+            
+            // Adicionar evento para validar entrada manual
+            cell.addEventListener('input', function() {
+                const linha = this.parentElement;
+                const tabela = linha.parentElement;
+                const turmaContainer = tabela.parentElement.parentElement;
+                const turmaId = turmaContainer.id;
+                const horarioIndex = Array.from(tabela.children).indexOf(linha);
+                const diaSemanaIndex = Array.from(linha.children).indexOf(this) - 1;
+                
+                // Se estiver vazio, não faz nada
+                if (!this.textContent.trim()) return;
+                
+                // Tenta extrair disciplina e professores do texto digitado
+                try {
+                    let texto = this.textContent.trim();
+                    let disciplina = texto;
+                    let professores = [];
+                    
+                    // Verificar se tem formato "Disciplina (Professor1, Professor2)"
+                    const regex = /^(.+?)\s*\((.+)\)$/;
+                    const matches = texto.match(regex);
+                    
+                    if (matches) {
+                        disciplina = matches[1].trim();
+                        professores = matches[2].split(',').map(p => p.trim());
+                        
+                        // Verificar conflitos de professores
+                        for (const professor of professores) {
+                            const { conflito, turma } = verificarConflitoProfessor(professor, horarioIndex, diaSemanaIndex, turmaId);
+                            if (conflito) {
+                                alert(`O professor ${professor} já está alocado neste mesmo horário na ${turma}ª Série!`);
+                                // Remove este professor
+                                professores = professores.filter(p => p !== professor);
+                            }
+                        }
+                        
+                        // Se removeu algum professor devido a conflito, atualiza a célula
+                        atualizarConteudoCelula(this, disciplina, professores);
+                    } else if (!professores.length && !disciplina) {
+                        // Se não tem formato válido e não tem disciplina, apaga
+                        this.textContent = '';
+                    }
+                } catch (error) {
+                    console.error("Erro ao processar entrada manual:", error);
+                }
             });
         });
     }
@@ -403,36 +470,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 menu.remove();
                 document.removeEventListener('click', closeMenu);
             });
-        }
-    });
-
-    document.addEventListener('input', function (e) {
-        const target = e.target;
-
-        if (target.classList.contains('droppable')) {
-            const conteudo = target.textContent;
-            const professores = conteudo.split(',').map(p => p.trim());
-
-            const linha = target.parentElement;
-            const tabela = linha.parentElement;
-            const turmaContainer = tabela.parentElement.parentElement;
-            const turmaId = turmaContainer.id;
-
-            const horarioIndex = Array.from(tabela.children).indexOf(linha);
-            const diaSemanaIndex = Array.from(linha.children).indexOf(target) - 1;
-
-            for (const professor of professores) {
-                if (professor.trim() === '') continue;
-
-                const { conflito, turma } = verificarConflitoProfessor(professor, horarioIndex, diaSemanaIndex, turmaId);
-
-                if (conflito) {
-                    alert(`O professor ${professor} já está alocado neste mesmo horário na ${turma}ª Série!`);
-                    const novosConteudos = professores.filter(p => p !== professor).join(', ');
-                    target.textContent = novosConteudos;
-                    break;
-                }
-            }
         }
     });
 });
